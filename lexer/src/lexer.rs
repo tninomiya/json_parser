@@ -2,6 +2,7 @@
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum LexErrorKind {
     InvalidChar(char),
+    UnknownToken(String),
     Eof,
 }
 
@@ -13,6 +14,9 @@ type LexError = Annot<LexErrorKind>;
 impl LexError {
     fn invalid_char(c: char, loc: Loc) -> Self {
         Self::new(LexErrorKind::InvalidChar(c), loc)
+    }
+    fn unknown_token(s: String, loc: Loc) -> Self {
+        Self::new(LexErrorKind::UnknownToken(s), loc)
     }
     fn eof(loc: Loc) -> Self {
         Self::new(LexErrorKind::Eof, loc)
@@ -42,6 +46,7 @@ fn lex(input: &str) -> Result<Vec<Token>, LexError> {
             b'}' => lex_a_token!(lex_rbrace(input, pos)),
             b'[' => lex_a_token!(lex_lbracket(input, pos)),
             b']' => lex_a_token!(lex_rbracket(input, pos)),
+            b'a'..=b'z' | b'A'..=b'Z' => lex_a_token!(lex_keyword(input, pos)),
             b' ' | b'\n' | b'\t' => {
                 let ((), p) = skip_spaces(input, pos)?;
                 pos = p;
@@ -130,6 +135,23 @@ fn lex_rbracket(input: &[u8], start: usize) -> Result<(Token, usize), LexError> 
     consume_bytes(input, start, b']').map(|(_, end)| (Token::rbracket(Loc::new(start, end)), end))
 }
 
+fn lex_keyword(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+    use std::str::from_utf8;
+
+    let end = recognize_sequence(input, start, |b| (b'a'..=b'z').contains(&b) || (b'A'..=b'Z').contains(&b));
+    if input.len() <= end {
+        return Err(LexError::eof(Loc::new(start, start)));
+    }
+
+    let s = from_utf8(&input[start..end]).unwrap();
+    
+    if let Some(token) = Token::get_keyword(&s, Loc::new(start, end)) {
+        return Ok((token, end));
+    } else {
+        return Err(LexError::unknown_token(s.to_string(), Loc::new(start, end)));
+    }
+}
+
 fn skip_spaces(input: &[u8], pos: usize) -> Result<((), usize), LexError> {
     let pos = recognize_sequence(input, pos, |b| b" \n\t".contains(&b));
     Ok(((), pos))
@@ -139,6 +161,7 @@ fn skip_spaces(input: &[u8], pos: usize) -> Result<((), usize), LexError> {
 mod tests {
     use super::*;
     use crate::annot::Loc;
+
     #[test]
     fn text_lexer_empty() {
         assert_eq!(
@@ -149,6 +172,7 @@ mod tests {
             ])
         )
     }
+
     #[test]
     fn text_lexer_flat() {
         assert_eq!(
@@ -170,13 +194,14 @@ mod tests {
     #[test]
     fn text_lexer() {
         assert_eq!(
-            lex("{'key1': 'value1', 'array': ['key2-1': 'value2-1', 'key2-2': 'value2-2'], 'object': {'key3-1': 'value3-1', 'key3-2': 'value3-2'}}"),
+            lex("{'key1': 'value1', 'array': ['key2-1': 'value2-1', 'key2-2': true], 'object': {'key3-1': 'value3-1', 'key3-2': false}, 'key4': null}"),
             Ok(vec![
                 Token::lbrace(Loc::new(0, 1)),
                 Token::literal("key1".to_string(), Loc::new(1, 7)),
                 Token::colon(Loc::new(7, 8)),
                 Token::literal("value1".to_string(), Loc::new(9, 17)),
                 Token::comma(Loc::new(17, 18)),
+                
                 // array
                 Token::literal("array".to_string(), Loc::new(19, 26)),
                 Token::colon(Loc::new(26, 27)),
@@ -187,28 +212,40 @@ mod tests {
                 Token::comma(Loc::new(49, 50)),
                 Token::literal("key2-2".to_string(), Loc::new(51, 59)),
                 Token::colon(Loc::new(59, 60)),
-                Token::literal("value2-2".to_string(), Loc::new(61, 71)),
-                Token::rbracket(Loc::new(71,72)),
-                Token::comma(Loc::new(72, 73)),
+                Token::true_value(Loc::new(61, 65)),
+                Token::rbracket(Loc::new(65,66)),
+                Token::comma(Loc::new(66, 67)),
+                
                 // object
-                Token::literal("object".to_string(), Loc::new(74, 82)),
-                Token::colon(Loc::new(82, 83)),
-                Token::lbrace(Loc::new(84 ,85)),
-                Token::literal("key3-1".to_string(), Loc::new(85, 93)),
-                Token::colon(Loc::new(93, 94)),
-                Token::literal("value3-1".to_string(), Loc::new(95, 105)),
-                Token::comma(Loc::new(105, 106)),
-                Token::literal("key3-2".to_string(), Loc::new(107, 115)),
-                Token::colon(Loc::new(115, 116)),
-                Token::literal("value3-2".to_string(), Loc::new(117, 127)),
-                Token::rbrace(Loc::new(127,128)),
+                Token::literal("object".to_string(), Loc::new(68, 76)),
+                Token::colon(Loc::new(76, 77)),
+                Token::lbrace(Loc::new(78 ,79)),
+                Token::literal("key3-1".to_string(), Loc::new(79, 87)),
+                Token::colon(Loc::new(87, 88)),
+                Token::literal("value3-1".to_string(), Loc::new(89, 99)),
+                Token::comma(Loc::new(99, 100)),
+                Token::literal("key3-2".to_string(), Loc::new(101, 109)),
+                Token::colon(Loc::new(109, 110)),
+                Token::false_value(Loc::new(111, 116)),
+                Token::rbrace(Loc::new(116,117)),
+                Token::comma(Loc::new(117, 118)),
 
-                Token::rbrace(Loc::new(128, 129)),
+                Token::literal("key4".to_string(), Loc::new(119, 125)),
+                Token::colon(Loc::new(125, 126)),
+                Token::null(Loc::new(127, 131)),
+                Token::rbrace(Loc::new(131, 132)),
             ])
         )
     }
+
     #[test]
     fn text_lexer_invalid_string() {
         assert_eq!(lex("{'key}"), Err(LexError::eof(Loc::new(6, 6))))
     }
+
+    #[test]
+    fn text_lexer_invalid_keyword() {
+        assert_eq!(lex("{invalid}"), Err(LexError::unknown_token("invalid".to_string(), Loc::new(1, 8))))
+    }
+
 }
