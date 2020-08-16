@@ -52,6 +52,9 @@ impl Token {
     pub fn lbracket(loc: Loc) -> Self {
         Self::new(TokenKind::LBracket, loc)
     }
+    pub fn rbracket(loc: Loc) -> Self {
+        Self::new(TokenKind::RBracket, loc)
+    }
     pub fn true_value(loc: Loc) -> Self {
         Self::new(TokenKind::True, loc)
     }
@@ -60,5 +63,13 @@ impl Token {
     }
     pub fn null(loc: Loc) -> Self {
         Self::new(TokenKind::Null, loc)
+    }
+    pub fn get_keyword(s: &str, loc: Loc) -> Option<Self> {
+        match s {
+            "true" => Some(Token::true_value(loc)),
+            "false" => Some(Token::false_value(loc)),
+            "null" => Some(Token::null(loc)),
+            _ => None,
+        }
     }
 }
