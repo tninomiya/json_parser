@@ -42,30 +42,25 @@ fn lex(input: &str) -> Result<Vec<Token>, LexError> {
     Ok(tokens)
 }
 
-fn lex_lbrace(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
+fn consume_bytes(input: &[u8], pos: usize, b: u8) -> Result<(u8, usize), LexError> {
     if input.len() < pos {
         return Err(LexError::eof(Loc::new(pos, pos)));
     }
-    if input[pos] != b'{' {
+    if input[pos] != b {
         return Err(LexError::invalid_char(
             input[pos] as char,
             Loc::new(pos, pos + 1),
         ));
     }
-    Ok((Token::lbrace(Loc::new(pos, pos + 1)), pos + 1))
+    Ok((b, pos + 1))
 }
 
-fn lex_rbrace(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
-    if input.len() < pos {
-        return Err(LexError::eof(Loc::new(pos, pos)));
-    }
-    if input[pos] != b'}' {
-        return Err(LexError::invalid_char(
-            input[pos] as char,
-            Loc::new(pos, pos + 1),
-        ));
-    }
-    Ok((Token::rbrace(Loc::new(pos, pos + 1)), pos + 1))
+fn lex_lbrace(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+    consume_bytes(input, start, b'{').map(|(_, end)| (Token::lbrace(Loc::new(start, end)), end))
+}
+
+fn lex_rbrace(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+    consume_bytes(input, start, b'}').map(|(_, end)| (Token::rbrace(Loc::new(start, end)), end))
 }
 
 #[cfg(test)]
