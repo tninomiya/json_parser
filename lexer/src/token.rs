@@ -52,6 +52,9 @@ impl Token {
     pub fn lbracket(loc: Loc) -> Self {
         Self::new(TokenKind::LBracket, loc)
     }
+    pub fn rbracket(loc: Loc) -> Self {
+        Self::new(TokenKind::RBracket, loc)
+    }
     pub fn true_value(loc: Loc) -> Self {
         Self::new(TokenKind::True, loc)
     }

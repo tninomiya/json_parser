@@ -43,7 +43,7 @@ fn lex(input: &str) -> Result<Vec<Token>, LexError> {
 }
 
 fn consume_bytes(input: &[u8], pos: usize, b: u8) -> Result<(u8, usize), LexError> {
-    if input.len() < pos {
+    if input.len() <= pos {
         return Err(LexError::eof(Loc::new(pos, pos)));
     }
     if input[pos] != b {
