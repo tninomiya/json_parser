@@ -9,6 +9,7 @@ enum LexErrorKind {
 use crate::annot::{Annot, Loc};
 use crate::token::Token;
 
+/// LexError represents errors for lexer with its position information.
 type LexError = Annot<LexErrorKind>;
 
 impl LexError {
@@ -23,6 +24,7 @@ impl LexError {
     }
 }
 
+// Converts a input to Tokens.
 fn lex(input: &str) -> Result<Vec<Token>, LexError> {
     let input = input.as_bytes();
 
