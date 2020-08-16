@@ -2,6 +2,8 @@ fn main() {
     println!("Hello, world!");
 }
 
+/// Loc describes a position from Loc.0 to Loc.1.
+/// As of now it does not support line number.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct Loc(usize, usize);
 
@@ -12,6 +14,7 @@ impl Loc {
     }
 }
 
+/// Annot combines values and its location.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct Annot<T> {
     value: T,
@@ -24,6 +27,7 @@ impl<T> Annot<T> {
     }
 }
 
+/// Enumeration of possible tokens recognized in JSON format.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum TokenKind {
     /// [0-9][0-9]*
@@ -50,6 +54,7 @@ enum TokenKind {
     Null,
 }
 
+/// Token represents token with its position information.
 type Token = Annot<TokenKind>;
 
 impl Token {
