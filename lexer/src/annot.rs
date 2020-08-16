@@ -4,6 +4,10 @@
 pub struct Loc(usize, usize);
 
 impl Loc {
+    pub fn new(from: usize, to: usize) -> Self {
+        Loc(from, to)
+    }
+
     fn merge(&self, other: &Loc) -> Loc {
         use std::cmp::{max, min};
         Loc(min(self.0, other.0), max(self.1, other.1))
