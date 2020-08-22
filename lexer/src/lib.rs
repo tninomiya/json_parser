@@ -1,3 +1,3 @@
 mod annot;
-mod lexer;
+pub mod lexer;
 mod token;
