@@ -1,6 +1,6 @@
 /// A list specifing general categories of the error possibly shown in lexer.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-enum LexErrorKind {
+pub enum LexErrorKind {
     InvalidChar(char),
     UnknownToken(String),
     Eof,
@@ -10,7 +10,7 @@ use crate::annot::{Annot, Loc};
 use crate::token::Token;
 
 /// LexError represents errors for lexer with its position information.
-type LexError = Annot<LexErrorKind>;
+pub type LexError = Annot<LexErrorKind>;
 
 impl LexError {
     fn invalid_char(c: char, loc: Loc) -> Self {
@@ -25,7 +25,7 @@ impl LexError {
 }
 
 // Converts a input to Tokens.
-fn lex(input: &str) -> Result<Vec<Token>, LexError> {
+pub fn lex(input: &str) -> Result<Vec<Token>, LexError> {
     let input = input.as_bytes();
 
     let mut tokens = Vec::new();
