@@ -1,4 +1,5 @@
 use lexer::lexer;
+use parser::parser;
 use std::io;
 
 fn prompt(s: &str) -> io::Result<()> {
@@ -22,8 +23,10 @@ fn main() {
         prompt("> ").unwrap();
         // ユーザの入力を取得する
         if let Some(Ok(line)) = lines.next() {
-            let token = lexer::lex(&line);
-            println!("{:?}", token);
+            let tokens = lexer::lex(&line).unwrap();
+            println!("{:?}", tokens);
+            let ast = parser::parse(tokens).unwrap();
+            println!("{:?}", ast);
         } else {
             break;
         }
