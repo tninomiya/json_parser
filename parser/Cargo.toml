@@ -1,5 +1,5 @@
 [package]
-name = "interpreter"
+name = "parser"
 version = "0.1.0"
 authors = ["Tomoki Ninomiya <t.miliya612@gmail.com>"]
 edition = "2018"
@@ -8,4 +8,4 @@ edition = "2018"
 
 [dependencies]
 lexer = {path = "../lexer"}
-parser = {path = "../parser"}
+
