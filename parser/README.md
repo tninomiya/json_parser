@@ -1,9 +1,6 @@
 # Parser
 
 EBNF
-- todo
-    - support fload number in interger
-    - support multibyte character
 
 ```
 json = object | array;
