@@ -8,7 +8,7 @@ impl Loc {
         Loc(from, to)
     }
 
-    fn merge(&self, other: &Loc) -> Loc {
+    pub fn merge(&self, other: &Loc) -> Loc {
         use std::cmp::{max, min};
         Loc(min(self.0, other.0), max(self.1, other.1))
     }
@@ -17,8 +17,8 @@ impl Loc {
 /// Annot combines values and its location.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Annot<T> {
-    value: T,
-    loc: Loc,
+    pub value: T,
+    pub loc: Loc,
 }
 
 impl<T> Annot<T> {
