@@ -40,7 +40,7 @@ pub fn lex(input: &str) -> Result<Vec<Token>, LexError> {
 
     while pos < input.len() {
         match input[pos] {
-            b'0'..=b'9' => lex_a_token!(lex_number(input, pos)),
+            b'-' | b'0'..=b'9' => lex_a_token!(lex_number(input, pos)),
             b'\'' | b'"' => lex_a_token!(lex_literal(input, pos)),
             b':' => lex_a_token!(lex_colon(input, pos)),
             b',' => lex_a_token!(lex_comma(input, pos)),
@@ -82,11 +82,14 @@ fn recognize_sequence(input: &[u8], mut pos: usize, mut f: impl FnMut(u8) -> boo
 fn lex_number(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
     use std::str::from_utf8;
 
-    let start = pos;
-    let end = recognize_sequence(input, start, |b| b"1234567890".contains(&b));
+    let mut head = pos;
+    if let Ok((_, p)) = consume_bytes(input, head, b'-') {
+        head = p;
+    }
+    let end = recognize_sequence(input, head, |b| b"1234567890".contains(&b));
 
-    let n = from_utf8(&input[start..end]).unwrap().parse().unwrap();
-    Ok((Token::number(n, Loc::new(start, end)), end))
+    let n = from_utf8(&input[pos..end]).unwrap().parse().unwrap();
+    Ok((Token::number(n, Loc::new(pos, end)), end))
 }
 
 fn lex_literal(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
@@ -178,7 +181,7 @@ mod tests {
     #[test]
     fn text_lexer_flat() {
         assert_eq!(
-            lex("{'key1': 'value1', 'key2': 'value2'}"),
+            lex("{'key1': 'value1', 'key2': -1234567}"),
             Ok(vec![
                 Token::lbrace(Loc::new(0, 1)),
                 Token::literal("key1".to_string(), Loc::new(1, 7)),
@@ -187,7 +190,7 @@ mod tests {
                 Token::comma(Loc::new(17, 18)),
                 Token::literal("key2".to_string(), Loc::new(19, 25)),
                 Token::colon(Loc::new(25, 26)),
-                Token::literal("value2".to_string(), Loc::new(27, 35)),
+                Token::number(-1234567, Loc::new(27, 35)),
                 Token::rbrace(Loc::new(35, 36)),
             ])
         )
